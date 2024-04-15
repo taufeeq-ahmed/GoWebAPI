@@ -63,12 +63,62 @@ func createBook(c *gin.Context) {
 		})
 	}
 }
+func updateBookById(c *gin.Context) {
+	var id = c.Param("id")
+
+	var index = -1
+	for i, book := range books {
+		if book.Id == id {
+			index = i
+			break
+		}
+	}
+
+	if index == -1 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Book not found"})
+		return
+	}
+
+	var updatedBook Book
+	err := c.ShouldBindJSON(&updatedBook)
+
+	if err == nil {
+		books[index] = updatedBook
+		c.JSON(http.StatusOK, updatedBook)
+	} else {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+	}
+
+}
+
+func deleteBookById(c *gin.Context) {
+	var id = c.Param("id")
+
+	var index = -1
+	for i, book := range books {
+		if book.Id == id {
+			index = i
+			break
+		}
+	}
+
+	if index != -1 {
+		books = append(books[:index], books[index+1:]...)
+		c.JSON(http.StatusOK, gin.H{"message": "Book is deleted"})
+	} else {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Book not found"})
+	}
+}
 
 func main() {
 	router := gin.Default()
 	router.GET("/ping", resppondToPing)
 	router.GET("/books", getAllBooks)
 	router.GET("/books/:id", getBookById)
-	router.POST("/books/", createBook)
+	router.POST("/books", createBook)
+	router.PUT("/books/:id", updateBookById)
+	router.DELETE("/books/:id", deleteBookById)
 	router.Run(":9000")
 }
